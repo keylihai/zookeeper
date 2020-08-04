@@ -45,6 +45,7 @@ class ZKWatchManager implements ClientWatchManager {
     private final Map<String, Set<Watcher>> persistentRecursiveWatches = new HashMap<>();
     private final boolean disableAutoWatchReset;
 
+    //默认的watcher
     private volatile Watcher defaultWatcher;
 
     ZKWatchManager(boolean disableAutoWatchReset, Watcher defaultWatcher) {
