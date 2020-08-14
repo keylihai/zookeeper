@@ -149,6 +149,7 @@ public class ClientCnxn {
 
     /**
      * These are the packets that need to be sent.
+     * 包发送队列
      */
     private final LinkedBlockingDeque<Packet> outgoingQueue = new LinkedBlockingDeque<Packet>();
 
@@ -166,6 +167,7 @@ public class ClientCnxn {
 
     private final int sessionTimeout;
 
+    //Watcher管理器
     private final ZKWatchManager watchManager;
 
     private long sessionId;
@@ -180,10 +182,13 @@ public class ClientCnxn {
      */
     private boolean readOnly;
 
+    //根目录设置
     final String chrootPath;
 
+    //请求发送线程
     final SendThread sendThread;
 
+    //用来处理事件的线程
     final EventThread eventThread;
 
     /**
@@ -317,6 +322,9 @@ public class ClientCnxn {
             this.watchRegistration = watchRegistration;
         }
 
+        /**
+         * packet序列化
+         */
         public void createBB() {
             try {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -552,6 +560,7 @@ public class ClientCnxn {
                     if (event == eventOfDeath) {
                         wasKilled = true;
                     } else {
+                        //疑问，遍历触发所有的event，在哪里等待服务端事件？
                         processEvent(event);
                     }
                     if (wasKilled) {
@@ -738,6 +747,7 @@ public class ClientCnxn {
     // @VisibleForTesting
     protected void finishPacket(Packet p) {
         int err = p.replyHeader.getErr();
+        //注册watcher
         if (p.watchRegistration != null) {
             p.watchRegistration.register(err);
         }
@@ -872,6 +882,11 @@ public class ClientCnxn {
         private Random r = new Random();
         private boolean isFirstConnect = true;
 
+        /**
+         * 事件加入eventThread
+         * @param incomingBuffer
+         * @throws IOException
+         */
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
             BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
@@ -1001,6 +1016,7 @@ public class ClientCnxn {
 
         /**
          * Setup session, previous watches, authentication.
+         * 完成一些客户端启动时候的session、前置事件、认证初始化处理
          */
         void primeConnection() throws IOException {
             LOG.info(
@@ -1074,12 +1090,14 @@ public class ClientCnxn {
                             opcode = OpCode.setWatches2;
                         }
                         RequestHeader header = new RequestHeader(ClientCnxn.SET_WATCHES_XID, opcode);
+                        //previous watcher处理
                         Packet packet = new Packet(header, new ReplyHeader(), record, null, null);
                         outgoingQueue.addFirst(packet);
                     }
                 }
             }
 
+            //auth处理
             for (AuthData id : authInfo) {
                 outgoingQueue.addFirst(
                     new Packet(
@@ -1089,6 +1107,7 @@ public class ClientCnxn {
                         null,
                         null));
             }
+            //session
             outgoingQueue.addFirst(new Packet(null, null, conReq, null, null, readOnly));
             clientCnxnSocket.connectionPrimed();
             LOG.debug("Session establishment request sent on {}", clientCnxnSocket.getRemoteSocketAddress());
@@ -1186,6 +1205,7 @@ public class ClientCnxn {
             InetSocketAddress serverAddress = null;
             while (state.isAlive()) {
                 try {
+                    //启动初始化
                     if (!clientCnxnSocket.isConnected()) {
                         // don't re-establish connection if we are closing
                         if (closing) {

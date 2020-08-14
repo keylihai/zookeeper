@@ -1953,6 +1953,7 @@ public class ZooKeeper implements AutoCloseable {
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
+            //注册自己的watcher
             wcb = new DataWatchRegistration(watcher, clientPath);
         }
 
@@ -3024,6 +3025,7 @@ public class ZooKeeper implements AutoCloseable {
     private ClientCnxnSocket getClientCnxnSocket() throws IOException {
         String clientCnxnSocketName = getClientConfig().getProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         if (clientCnxnSocketName == null) {
+            //默认使用nio？
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
         try {

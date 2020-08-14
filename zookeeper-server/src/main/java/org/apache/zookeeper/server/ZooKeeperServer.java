@@ -313,6 +313,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog, ZKDatabase zkDb, String initialConfig, boolean reconfigEnabled) {
+        //创建服务器统计器
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
@@ -470,6 +471,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
+     * 回复本地数据
      *  Restore sessions and data
      */
     public void loadData() throws IOException, InterruptedException {
@@ -656,6 +658,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (zkDb == null) {
             zkDb = new ZKDatabase(this.txnLogFactory);
         }
+        //恢复本地数据
         if (!zkDb.isInitialized()) {
             loadData();
         }
@@ -665,11 +668,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (sessionTracker == null) {
             createSessionTracker();
         }
+        //创建并启动回话管理器
         startSessionTracker();
+        //初始化请求处理链
         setupRequestProcessors();
 
         startRequestThrottler();
 
+        //注册JMX
         registerJMX();
 
         startJvmPauseMonitor();
@@ -696,6 +702,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     }
 
+    //责任链式处理客户端请求
+    //preRequestProcessor,syncRequestProcessor,finalRequestProcessor
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor syncProcessor = new SyncRequestProcessor(this, finalProcessor);

@@ -95,6 +95,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
      * @return the session Id
      */
     public static long initializeNextSessionId(long id) {
+        //生成回话id
         long nextSid;
         nextSid = (Time.currentElapsedTime() << 24) >>> 8;
         nextSid = nextSid | (id << 56);

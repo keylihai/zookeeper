@@ -150,6 +150,7 @@ public final class StaticHostProvider implements HostProvider {
         }
     }
 
+    //为啥要打乱顺序？不太理解
     private List<InetSocketAddress> shuffle(Collection<InetSocketAddress> serverAddresses) {
         List<InetSocketAddress> tmpList = new ArrayList<>(serverAddresses.size());
         tmpList.addAll(serverAddresses);
